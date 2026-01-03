@@ -1,5 +1,0 @@
-anthropic
-numpy
-matplotlib
-urllib3
-chromadb

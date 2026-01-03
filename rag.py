@@ -11,9 +11,8 @@ This function generates a response using the Claude API
 """
 Claude_API_Key = os.getenv("CLAUDE_API_KEY")
 
-def rag_chain_of_thought_response(query, chroma_client):
+def rag_chain_of_thought_response(query, chroma_client, client):
     context = get_rag_context(query, chroma_client)
-    client = anthropic.Anthropic(api_key=Claude_API_Key)
     with client.messages.stream(
         model="claude-sonnet-4-5",
         max_tokens=20000,
@@ -23,9 +22,9 @@ def rag_chain_of_thought_response(query, chroma_client):
         for event in stream:
             if event.type == "content_block_delta":
                 if event.delta.type == "thinking_delta":
-                    print(event.delta.thinking, end="", flush=True)
+                    yield event.delta.thinking
                 elif event.delta.type == "text_delta":
-                    print(event.delta.text, end="", flush=True)
+                    yield event.delta.text
 
 
 def get_rag_context(query, chroma_client, num_docs=3):
@@ -34,7 +33,6 @@ def get_rag_context(query, chroma_client, num_docs=3):
         query_texts=[query],
         n_results=num_docs
     )
-    # results['documents'] is a list of lists, get the first list and join the documents
     documents = results['documents'][0] if results['documents'] else []
     return "\n\n".join(documents)
 
